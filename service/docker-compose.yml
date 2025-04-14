@@ -1,0 +1,17 @@
+services:
+  marstalk_app0:
+    image: python:3.12-slim
+    container_name: marstalk_app
+    volumes:
+      - ./app:/app
+    ports:
+      - "4444:4444"
+    restart: always
+    networks:
+      - marstalk_net
+    working_dir: /app
+    command: python -u marstalk.py
+
+networks:
+  marstalk_net:
+    driver: bridge
