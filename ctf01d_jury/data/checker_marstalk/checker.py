@@ -1,94 +1,97 @@
 #!/usr/bin/env python3
 
+"""
+Checker (healthcheck) for service marstalk
+"""
+
 import sys
 import math
 import socket
 import errno
 
+
 # the flag putting/checking into the service is successful
 def service_up():
+    """ Service UP status """
     print("[service is worked] - 101")
-    exit(101)
+    sys.exit(101)
 
-# service is available (available tcp connection) but it's impossible to put/get the flag
+
+# service is available (available tcp connection)
+# but it's impossible to put/get the flag
 def service_corrupt():
+    """ Service CORRUPT status """
     print("[service is corrupt] - 102")
-    exit(102)
+    sys.exit(102)
+
 
 # service is not available (maybe blocked port or service is down)
 def service_down():
+    """ Service DOWN status """
     print("[service is down] - 104")
-    exit(104)
+    sys.exit(104)
+
 
 if len(sys.argv) != 5:
-    print("\nUsage:\n\t" + sys.argv[0] + " <host> (put|check) <flag_id> <flag>\n")
-    print("Example:\n\t" + sys.argv[0] + " \"127.0.0.1\" put \"abcdifghr\" \"c01d4567-e89b-12d3-a456-426600000010\" \n")
+    app = sys.argv[0]
+    FLAG_EXAMPLE = "\"c01d4567-e89b-12d3-a456-426600000010\""
+    print("""
+Usage:
+  """ + app + """ <host> (put|check) <flag_id> <flag>
+Example:
+  """ + app + """ "127.0.0.1" "put" "abcdifghr" """ + FLAG_EXAMPLE + """
+""")
+    print("\n\t" + sys.argv[0] + " ")
     print("\n")
-    exit(0)
-
-# code = "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>."
-# res = run(code)
-# print(res)
-
-# list ++++++++++[>++++++++++<-]>++++++++.<+[>---<-]>.<+++[>+++<-]>+.<+[>+<-]>.<
-# test2 ++++++++++[>+++++++++++<-]>++++++.<+++[>-----<-]>.<+++[>++++<-]>++.<+[>+<-]>.<++++++++[>--------<-]>--.<
-# put ++++++++++[>+++++++++++<-]>++.<++[>++<-]>+.<+[>-<-]>.<
-# get ++++++++++[>++++++++++<-]>+++.<+[>--<-]>.<+++[>+++++<-]>.<
-
-# code2 = compile_str("get")
-# print(code2)
-# res2 = run(code2)
-# print(res2)
+    sys.exit(0)
 
 
 class MarsTalk:
-
     """ class encode / decode """
 
     @staticmethod
     def encode(msg):
         """ encode """
         result = ''
-        val2 = 0
-        for c in msg:
-            ch = ord(c)
-            if ch == val2:
+        curr_value_registry = 0
+        for simbol in msg:
+            simbol_code = ord(simbol)
+            if simbol_code == curr_value_registry:
                 result = result + ">.<"
                 continue
-            minus = ''
-            if val2 > ch:
-                ch = val2 - ch
-                minus = '-'
-            if val2 < ch:
-                ch = ch - val2
-                minus = '+'
+            _operator = ''
+            if curr_value_registry > simbol_code:
+                simbol_code = curr_value_registry - simbol_code
+                _operator = '-'
+            if curr_value_registry < simbol_code:
+                simbol_code = simbol_code - curr_value_registry
+                _operator = '+'
             result = result + ''
-            sq = int(math.floor(math.sqrt(ch)))
+            squard_val = int(math.floor(math.sqrt(simbol_code)))
             curr1 = 0
-            while curr1 < sq:
+            while curr1 < squard_val:
                 curr1 = curr1 + 1
                 result = result + "+"
-            w = int(ch / sq)
+            width = int(simbol_code / squard_val)
             result = result + '[>'
-            i1 = 0
-            while i1 < w:
-                result = result + minus
-                i1 = i1 + 1
-
-            if minus == '-':
-                val2 = val2 - w * sq
-            if minus == '+':
-                val2 = val2 + w * sq
+            i = 0
+            while i < width:
+                result = result + _operator
+                i += 1
+            if _operator == '-':
+                curr_value_registry = curr_value_registry - width * squard_val
+            if _operator == '+':
+                curr_value_registry = curr_value_registry + width * squard_val
             result = result + '<-]>'
-            w2 = ch - w * sq
-            while w2 > 0:
-                w2 = w2 - 1
-                if minus == '-':
+            width2 = simbol_code - width * squard_val
+            while width2 > 0:
+                width2 = width2 - 1
+                if _operator == '-':
                     result = result + '-'
-                    val2 = val2 - 1
-                if minus == '+':
+                    curr_value_registry = curr_value_registry - 1
+                if _operator == '+':
                     result = result + '+'
-                    val2 = val2 + 1
+                    curr_value_registry = curr_value_registry + 1
             result = result + '.<'
         return result
 
@@ -108,53 +111,50 @@ class MarsTalk:
         return blocks
 
     @staticmethod
-    def parse(code):
-        """ parse """
-        return ''.join(c for c in code if c in '><+-.,[]')
-
-    @staticmethod
     def decode(msg):
         """ decode """
         msg = msg.strip()
-        msg = MarsTalk.parse(msg)
-        x = i = 0
-        bf = {0: 0}
+        msg = ''.join(c for c in msg if c in '><+-.,[]')
+        pos_x = i = 0
+        registries = {0: 0}
         blocks = MarsTalk.block(msg)
         length = len(msg)
         result = ""
         while i < length:
             sym = msg[i]
             if sym == '>':
-                x += 1
-                bf.setdefault(x, 0)
+                pos_x += 1
+                registries.setdefault(pos_x, 0)
             elif sym == '<':
-                x -= 1
+                pos_x -= 1
             elif sym == '+':
-                bf[x] += 1
+                registries[pos_x] += 1
             elif sym == '-':
-                bf[x] -= 1
+                registries[pos_x] -= 1
             elif sym == '.':
-                result = result + chr(bf[x])
+                result = result + chr(registries[pos_x])
             # elif sym == ',':
-            #     bf[x] = int(input('Input: '))
+            #     registries[pos_x] = int(input('Input: '))
             elif sym == '[':
-                if not bf[x]:
+                if not registries[pos_x]:
                     i = blocks[i]
             elif sym == ']':
-                if bf[x]:
+                if registries[pos_x]:
                     i = blocks[i]
             i += 1
         return result
 
+
 HOST = sys.argv[1]
 PORT = 4444
-
 COMMAND = sys.argv[2]
 
 f_id = sys.argv[3]
 flag = sys.argv[4]
 
+
 def send_msg(_sock, _msg):
+    """ Send message """
     print("send_msg [" + _msg + "]")
     _msg = MarsTalk.encode(_msg)
     _msg += "\n"
@@ -162,29 +162,30 @@ def send_msg(_sock, _msg):
     print("send_msg (dec) [" + MarsTalk.decode(_msg) + "]")
     _sock.send(_msg.encode())
 
+
 def recv_msg(_sock):
+    """ Recive message """
     msg = _sock.recv(1024).decode("utf-8")
     print("msg = [" + msg + "]")
     msg = MarsTalk.decode(msg)
     print("recv_msg: [" + msg + "]")
     return msg
 
-# 1q2z2j9x8~
-# 1q2w3e4r5t
 
 def put_flag():
+    """ Put Flag to Service """
     print("put_flag")
     try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect((HOST, PORT))
-        recv_msg(s)
-        send_msg(s, "put")
-        recv_msg(s)
-        send_msg(s, f_id)
-        recv_msg(s)
-        send_msg(s, flag)
-        recv_msg(s)
-        s.close()
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect((HOST, PORT))
+        recv_msg(sock)
+        send_msg(sock, "put")
+        recv_msg(sock)
+        send_msg(sock, f_id)
+        recv_msg(sock)
+        send_msg(sock, flag)
+        recv_msg(sock)
+        sock.close()
     except socket.timeout:
         service_down()
     except socket.error as serr:
@@ -193,24 +194,26 @@ def put_flag():
         else:
             print(serr)
             service_corrupt()
-    except Exception as e:
-        print(e)
+    except Exception as err:  # pylint: disable=broad-except
+        print(err)
         service_corrupt()
 
+
 def check_flag():
+    """ Check flag on service """
     print("check_flag")
     flag2 = ""
     try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect((HOST, PORT))
-        recv_msg(s)
-        send_msg(s, "get")
-        recv_msg(s)
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect((HOST, PORT))
+        recv_msg(sock)
+        send_msg(sock, "get")
+        recv_msg(sock)
         print("f_id: " + f_id)
-        send_msg(s, f_id)
-        flag2 = recv_msg(s)
+        send_msg(sock, f_id)
+        flag2 = recv_msg(sock)
         print("flag2 = [" + flag2 + "]")
-        s.close()
+        sock.close()
     except socket.timeout:
         service_down()
     except socket.error as serr:
@@ -219,11 +222,12 @@ def check_flag():
         else:
             print(serr)
             service_corrupt()
-    except Exception as e:
-        print(e)
+    except Exception as err:  # pylint: disable=broad-except
+        print(err)
         service_corrupt()
     if flag != flag2:
         service_corrupt()
+
 
 if COMMAND == "put":
     put_flag()
