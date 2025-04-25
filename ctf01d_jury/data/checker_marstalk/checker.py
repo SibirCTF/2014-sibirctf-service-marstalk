@@ -68,7 +68,7 @@ class MarsTalk:
             while curr1 < sq:
                 curr1 = curr1 + 1
                 result = result + "+"
-            w = ch / sq
+            w = int(ch / sq)
             result = result + '[>'
             i1 = 0
             while i1 < w:

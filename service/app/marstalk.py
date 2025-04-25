@@ -43,13 +43,12 @@ class MarsTalk:
             while curr1 < sq:
                 curr1 = curr1 + 1
                 result = result + "+"
-            w = ch / sq
+            w = int(ch / sq)
             result = result + '[>'
             i1 = 0
             while i1 < w:
                 result = result + minus
                 i1 = i1 + 1
-
             if minus == '-':
                 val2 = val2 - w * sq
             if minus == '+':
@@ -83,15 +82,10 @@ class MarsTalk:
         return blocks
 
     @staticmethod
-    def parse(code):
-        """ parse """
-        return ''.join(c for c in code if c in '><+-.,[]')
-
-    @staticmethod
     def decode(msg):
         """ decode """
         msg = msg.strip()
-        msg = MarsTalk.parse(msg)
+        msg = ''.join(c for c in msg if c in '><+-.,[]')
         x = i = 0
         bf = {0: 0}
         blocks = MarsTalk.block(msg)
