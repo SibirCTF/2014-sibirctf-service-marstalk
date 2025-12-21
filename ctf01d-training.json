@@ -1,0 +1,38 @@
+{
+  "service_name": "2014-sibirctf-service-marstalk",
+  "display_name": "Marstalk",
+  "ctf_event": "SibirCTF 2014",
+  "year": 2014,
+  "description": "Сокетный сервис с кодированием сообщений и хранением данных по id.",
+  "author": null,
+  "service_port": 4444,
+  "languages": [
+    "Python"
+  ],
+  "tech_stack": [
+    "Python",
+    "TCP"
+  ],
+  "dependencies": {
+    "runtime": [],
+    "development": [],
+    "system": []
+  },
+  "vulnerabilities": [
+    {
+      "type": "Information Disclosure",
+      "description": "Команда list отдает список всех id, что упрощает поиск флагов.",
+      "severity": "Medium"
+    },
+    {
+      "type": "Missing Authentication",
+      "description": "Команды put/get доступны без проверки пользователя.",
+      "severity": "Medium"
+    }
+  ],
+  "metadata": {
+    "difficulty": null,
+    "category": null,
+    "tags": []
+  }
+}
